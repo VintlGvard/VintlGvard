@@ -1,16 +1,18 @@
-### Hi there 👋
+# Hello 👋
+I'm a Russian high school student. I study programming. I am writing small projects due to my limited knowledge (for now). I mostly use Python, but I don't consider it the best language I've ever used.
 
-<!--
-**VintlGvard/VintlGvard** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+All my projects uploaded to GitHub are not raw. Mostly these are almost or already completed projects, and some of them do not even require changes.
 
-Here are some ideas to get you started:
+![Stats](https://github-readme-stats-git-masterrstaa-rickstaa.vercel.app/api?username=vintlgvard&show_icons=true&theme=synthwave)
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+<div id="badges">
+  <a href="https://discord.com/users/889094939831578624">
+    <img src="https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"/>
+  </a>
+  <a href="https://vk.com/vintlgvard">
+    <img src="https://img.shields.io/badge/вконтакте-%232E87FB.svg?&style=for-the-badge&logo=vk&logoColor=white" alt="Vk"/>
+  </a>
+  <a href="https://t.me/vintlgvard">
+    <img src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram"/>
+  </a>
+</div>
