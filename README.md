@@ -15,4 +15,7 @@ All my projects uploaded to GitHub are not raw. Mostly these are almost or alrea
   <a href="https://t.me/vintlgvard">
     <img src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram"/>
   </a>
+  <a href="https://bento.me/vintlgvard">
+    <img src="https://img.shields.io/badge/Other-gray?style=for-the-badge&logo=bento&logoColor=white" alt="Bento"/>
+  </a>
 </div>
