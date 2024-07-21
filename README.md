@@ -1,5 +1,5 @@
 # Hello 👋
-I'm a Russian student. I study programming. I am writing small projects due to my limited knowledge (for now). I mostly use Python, but I don't consider it the best language I've ever used.
+I'm a Russian student. I am writing small projects due to my limited knowledge (for now). I mostly use Python, but I don't consider it the best language I've ever used.
 
 All my projects uploaded to GitHub are not raw. Mostly these are almost or already completed projects, and some of them do not even require changes.
 
