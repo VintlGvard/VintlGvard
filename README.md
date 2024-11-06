@@ -10,16 +10,16 @@
   </ul>
 </div>
 
-**<h3 align="center">Connect with me:</h3>** 
+**<h3 align="center">Найди меня в:</h3>** 
 <p align="center"><a href="https://github.com/VintlGvard" target="_blank"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" height="36" style="margin-right: 4px"></a> <a href="https://www.tiktok.com/@VintlGvard" target="_blank"><img src="https://img.shields.io/badge/TikTok-000000?style=for-the-badge&logo=tiktok&logoColor=white" height="36" style="margin-right: 4px"></a> <a href="https://twitter.com/VintlGvard" target="_blank"><img src="https://img.shields.io/badge/Twitter-000000?style=for-the-badge&logo=X&logoColor=white" height="36" style="margin-right: 4px"></a> <a href="https://www.youtube.com/@VintlGvard" target="_blank"><img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" height="36" style="margin-right: 4px"></a></p>
 
  **<h3 align="left">🚀 Я обучаюсь фулстек разработке сайтов и стремлюсь стать профессионалом в этой области. Мой опыт охватывает как фронтенд, так и бэкенд разработку, что позволяет мне создавать полноценные веб-приложения от начала до конца. Я стремлюсь развиваться в области веб-разработки, изучать новые технологии и участвовать в интересных проектах. Всегда открыт для сотрудничества и обмена опытом!</h3>**
 
- **<h3 align="center">Skills</h3>**
+ **<h3 align="center">Скилы</h3>**
 
 <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;"><img src="https://skillicons.dev/icons?i=python" height="48" alt="Python" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=javascript" height="48" alt="JavaScript" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=nodejs" height="48" alt="Node.js" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=django" height="48" alt="Django" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=fastapi" height="48" alt="FastAPI" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=docker" height="48" alt="Docker" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=webstorm" height="48" alt="WebStorm" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=pycharm" height="48" alt="PyCharm" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=idea" height="48" alt="Intellij" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=vscode" height="48" alt="VSCode" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=gitlab" height="48" alt="GitLab CI" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=sass" height="48" alt="Sass" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=opencv" height="48" alt="OpenCV" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=sublime" height="48" alt="Sublime Text" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=figma" height="48" alt="Figma" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=notion" height="48" alt="Notion" style="margin-right: 8px"> <img src="https://skillicons.dev/icons?i=unity" height="48" alt="Unity" style="margin-right: 8px"></div>
 
- **<h3 align="left">GitHub Stats</h3>**
+ **<h3 align="left">Статистика</h3>**
 
 <p align="left">
   <img width="48%" src="https://github-readme-stats.vercel.app/api?username=vintlgvard&theme=react&hide_title=false&hide_rank=false&show_icons=false&include_all_commits=false&count_private=true&line_height=23&locale=ru" alt="GitHub stats Card" />
