@@ -1,0 +1,35 @@
+name: refresh profile
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-profile
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: install deps
+        run: pip install -r requirements.txt
+      - name: regenerate assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 update.py
+      - name: commit changes
+        run: |
+          git config user.name "VintlGvard"
+          git config user.email "me@vintlgvard.com"
+          git add assets
+          git diff --cached --quiet || git commit -m "chore: refresh profile data [skip ci]"
+          git push
