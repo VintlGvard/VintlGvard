@@ -31,5 +31,5 @@ jobs:
           git config user.name "VintlGvard"
           git config user.email "me@vintlgvard.com"
           git add assets
-          git diff --cached --quiet || git commit -m "chore: refresh profile data [skip ci]"
+          git diff --cached --quiet || git commit -m "chore: refresh profile data"
           git push
