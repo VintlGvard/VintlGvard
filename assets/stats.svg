@@ -48,7 +48,7 @@
 </g>
 <g class="floaty fadeup" style="animation-delay:0.17s">
   <rect x="208" y="76" width="148" height="80" rx="16" fill="#FFFFFF" fill-opacity=".05" stroke="#FFFFFF" stroke-opacity=".12"/>
-  <text class="sans text" x="224" y="106" font-size="23" font-weight="800">8</text>
+  <text class="sans text" x="224" y="106" font-size="23" font-weight="800">7</text>
   <rect class="breathe" style="animation-delay:0.70s" x="224" y="114" width="5" height="2" rx="1" fill="url(#accentGrad)">
     <animate attributeName="width" from="5" to="52" dur=".7s" begin="0.27s" fill="freeze"/>
   </rect>

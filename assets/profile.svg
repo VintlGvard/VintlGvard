@@ -70,7 +70,7 @@
   <rect x="48" y="190" width="408" height="32" rx="16" fill="#FFFFFF" fill-opacity=".06" stroke="#FFFFFF" stroke-opacity=".12"/>
   <text class="mono" x="64" y="210" font-size="10" fill="#00E5CC">12 REPOS</text>
   <line x1="136" y1="198" x2="136" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
-  <text class="mono text" x="152" y="210" font-size="10">★ 8</text>
+  <text class="mono text" x="152" y="210" font-size="10">★ 7</text>
   <line x1="204" y1="198" x2="204" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
   <text class="mono text" x="220" y="210" font-size="10">1 FOLLOWERS</text>
   <line x1="312" y1="198" x2="312" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
@@ -281,7 +281,7 @@
   <circle class="pulse" style="animation-delay:0.90s" cx="72" cy="260" r="5" fill="#00E5CC" opacity=".9"/>
   <text class="sans text" x="88" y="255" font-size="12.5" font-weight="700">Steam_PricePerHour</text>
   <text class="sans muted" x="88" y="273" font-size="10.5">Shows how much playtime you're getting for your money…</text>
-  <text class="mono text" x="828" y="254" font-size="10" text-anchor="end">★ 1</text>
+  <text class="mono text" x="828" y="254" font-size="10" text-anchor="end">★ 0</text>
   <text class="mono muted" x="828" y="273" font-size="9.5" text-anchor="end">JavaScript · 18 Sep 2026</text>
   </g>
 </g>
@@ -373,7 +373,7 @@
 </g>
 <g class="floaty fadeup" style="animation-delay:0.17s">
   <rect x="208" y="76" width="148" height="80" rx="16" fill="#FFFFFF" fill-opacity=".05" stroke="#FFFFFF" stroke-opacity=".12"/>
-  <text class="sans text" x="224" y="106" font-size="23" font-weight="800">8</text>
+  <text class="sans text" x="224" y="106" font-size="23" font-weight="800">7</text>
   <rect class="breathe" style="animation-delay:0.70s" x="224" y="114" width="5" height="2" rx="1" fill="url(#accentGrad)">
     <animate attributeName="width" from="5" to="52" dur=".7s" begin="0.27s" fill="freeze"/>
   </rect>
