@@ -91,7 +91,7 @@
   <circle class="pulse" style="animation-delay:0.90s" cx="72" cy="260" r="5" fill="#00E5CC" opacity=".9"/>
   <text class="sans text" x="88" y="255" font-size="12.5" font-weight="700">Steam_PricePerHour</text>
   <text class="sans muted" x="88" y="273" font-size="10.5">Shows how much playtime you're getting for your money…</text>
-  <text class="mono text" x="828" y="254" font-size="10" text-anchor="end">★ 0</text>
+  <text class="mono text" x="828" y="254" font-size="10" text-anchor="end">★ 1</text>
   <text class="mono muted" x="828" y="273" font-size="9.5" text-anchor="end">JavaScript · 18 Sep 2026</text>
   </g>
 </g>
