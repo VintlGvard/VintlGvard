@@ -68,7 +68,7 @@
 <rect class="blink" x="184" y="159" width="7" height="15" rx="1" fill="#00E5CC"/>
 <g class="fadeup" style="animation-delay:.28s">
   <rect x="48" y="190" width="408" height="32" rx="16" fill="#FFFFFF" fill-opacity=".06" stroke="#FFFFFF" stroke-opacity=".12"/>
-  <text class="mono" x="64" y="210" font-size="10" fill="#00E5CC">13 REPOS</text>
+  <text class="mono" x="64" y="210" font-size="10" fill="#00E5CC">14 REPOS</text>
   <line x1="136" y1="198" x2="136" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
   <text class="mono text" x="152" y="210" font-size="10">★ 7</text>
   <line x1="204" y1="198" x2="204" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
@@ -364,7 +364,7 @@
   
 <g class="floaty fadeup" style="animation-delay:0.08s">
   <rect x="48" y="76" width="148" height="80" rx="16" fill="#FFFFFF" fill-opacity=".05" stroke="#FFFFFF" stroke-opacity=".12"/>
-  <text class="sans text" x="64" y="106" font-size="23" font-weight="800">13</text>
+  <text class="sans text" x="64" y="106" font-size="23" font-weight="800">14</text>
   <rect class="breathe" style="animation-delay:0.50s" x="64" y="114" width="5" height="2" rx="1" fill="url(#accentGrad)">
     <animate attributeName="width" from="5" to="52" dur=".7s" begin="0.18s" fill="freeze"/>
   </rect>
@@ -391,7 +391,7 @@
 </g>
 <g class="floaty fadeup" style="animation-delay:0.35s">
   <rect x="528" y="76" width="148" height="80" rx="16" fill="#FFFFFF" fill-opacity=".05" stroke="#FFFFFF" stroke-opacity=".12"/>
-  <text class="sans text" x="544" y="106" font-size="23" font-weight="800">6</text>
+  <text class="sans text" x="544" y="106" font-size="23" font-weight="800">7</text>
   <rect class="breathe" style="animation-delay:1.10s" x="544" y="114" width="5" height="2" rx="1" fill="url(#accentGrad)">
     <animate attributeName="width" from="5" to="52" dur=".7s" begin="0.45s" fill="freeze"/>
   </rect>
