@@ -97,75 +97,73 @@ def truncate(value, max_chars: int, max_units: float | None = None) -> str:
     if len(text) <= max_chars and char_units(text) <= max_units:
         return text
     out: list[str] = []
-    units = 0.0
     for ch in text:
-        u = char_units(ch)
-        if len(out) + 1 > max_chars - 1 or units + u > max_units - 1.0:
+        candidate = "".join(out) + ch + "…"
+        if len(candidate) > max_chars or char_units(candidate) > max_units:
             break
         out.append(ch)
-        units += u
-    return "".join(out).rstrip() + "…"
+    return ("".join(out).rstrip() + "…") if out else "…"
 
 
-def format_num(val) -> str:
+def fmt_date(iso) -> str:
     try:
-        val = int(val)
-    except (TypeError, ValueError):
-        return "0"
-    return f"{val:,}".replace(",", " ")
-
-
-def metric(val) -> str:
-    if val is None:
-        return "--"
-    try:
-        n = int(val)
-    except (TypeError, ValueError):
-        return str(val)
-    if n >= 1000:
-        return f"{n / 1000:.1f}k"
-    return str(n)
-
-
-def relative_age(iso_date: str) -> str:
-    if not iso_date:
-        return "dormant"
-    clean = re.sub(r"[+-]\d{2}:\d{2}$|Z$", "", iso_date)
-    try:
-        pushed = date.fromisoformat(clean.split("T")[0])
+        return date.fromisoformat(str(iso)[:10]).strftime("%d %b %Y")
     except ValueError:
-        return "dormant"
-    days = (date.today() - pushed).days
-    if days < 0:
-        days = 0
-    if days == 0:
-        return "active today"
-    if days == 1:
-        return "active yesterday"
-    if days < 30:
-        return f"active {days}d ago"
-    months = days // 30
-    if months < 12:
-        return f"{months}mo ago"
-    years = days // 365
-    return f"{years}y ago"
+        return "—"
+
+
+
+
+
+
+
+def repo_score(repo: dict, now: date) -> float:
+    stars = int(repo.get("stargazers_count") or 0)
+    try:
+        pushed = date.fromisoformat(str(repo.get("pushed_at") or "")[:10])
+        fresh = max(0, FRESH_WINDOW_DAYS - (now - pushed).days)
+    except ValueError:
+        fresh = 0
+    boost = SHOWCASE_BOOST if repo.get("name") in SHOWCASE else 0
+    return stars * STAR_WEIGHT + fresh + boost
+
+
+def choose_shipping(
+    repos: list, now: date | None = None
+) -> list:
+    day = now or date.today()
+    candidates = [
+        r for r in repos
+        if not r.get("archived") and not r.get("fork") and r.get("name") != USER
+    ]
+    candidates.sort(key=lambda r: repo_score(r, day), reverse=True)
+    return candidates[:3]
+
+
+def primary_counts(repos: list) -> dict:
+    counter = defaultdict(int)
+    for repo in repos:
+        if repo.get("fork") or repo.get("archived") or repo.get("name") == USER:
+            continue
+        if repo.get("language"):
+            counter[str(repo["language"])] += 1
+    return counter
 
 
 def load_cache(path: Path) -> dict:
-    if path.exists():
-        try:
-            return json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            pass
-    return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return data if isinstance(data, dict) else {}
 
 
 def save_cache(path: Path, cache: dict) -> None:
     try:
-        path.write_text(json.dumps(cache, indent=2, sort_keys=True) + "\n",
+        path.write_text(json.dumps(cache, separators=(",", ":")),
                         encoding="utf-8")
     except OSError as exc:
-        print(f"[warn] cache write failed: {exc}", file=sys.stderr)
+        print(f"[warn] language cache write failed: {exc}", file=sys.stderr)
 
 
 def aggregate_languages(
@@ -209,21 +207,11 @@ def top_langs(counter) -> list:
 
 def offline_payload(reason: str) -> dict:
     return {
-        "user": {"login": USER, "public_repos": None, "followers": None},
+        "user": {"public_repos": None, "followers": None},
         "repos": [], "stars": None, "shipping": [], "languages": [],
-        "languages_source": "offline", "offline": True, "reason": reason,
+        "languages_source": "none", "offline": True,
+        "reason": truncate(reason, 84, 72),
     }
-
-
-def primary_counts(repos: list) -> dict:
-    tally = defaultdict(int)
-    for r in repos:
-        if r.get("fork") or r.get("archived") or r.get("name") == USER:
-            continue
-        lang = r.get("language")
-        if lang:
-            tally[str(lang)] += 1
-    return tally
 
 
 def repo_dict(repo) -> dict:
@@ -281,58 +269,38 @@ def get_data(token: str | None, fixture: str | None,
         return offline_payload(str(exc))
 
 
-def choose_shipping(repos: list) -> list:
-    active = [r for r in repos if not r.get("fork") and not r.get("archived")
-              and r.get("name") != USER]
-
-    def score(r):
-        s = 0
-        if r.get("name") in SHOWCASE:
-            s += SHOWCASE_BOOST
-        s += int(r.get("stargazers_count") or 0) * STAR_WEIGHT
-        age = relative_age(str(r.get("pushed_at") or ""))
-        if "today" in age or "yesterday" in age or (
-            "d ago" in age and int(re.findall(r"\d+", age)[0]) <= FRESH_WINDOW_DAYS
-        ):
-            s += 10
-        return s
-
-    active.sort(key=score, reverse=True)
-    return active[:3]
-
-
-COMMON_STYLES = (
-    ".sans{font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}"
-    ".mono{font-family:'JetBrains Mono','Cascadia Code',Consolas,monospace}"
-    ".text{fill:#E8EEF4}.muted{fill:#8B95A5}.dim{fill:#5B6472}.accent{fill:#00E5CC}"
-    ".rise{opacity:1;animation:rise .72s cubic-bezier(.22,.9,.3,1.05) both}"
-    ".fadeup{opacity:1;animation:fadeup .58s cubic-bezier(.22,.9,.3,1.05) both}"
-    ".pulse{opacity:1;animation:pulse 2.2s ease-in-out infinite}"
-    ".flow{stroke-dasharray:7 9;animation:flow 1.35s linear infinite}"
-    ".blink{opacity:1;animation:blink 1s step-end infinite}"
-    ".floaty{animation:floaty 4.8s ease-in-out infinite alternate}"
-    ".spin{transform-box:fill-box;transform-origin:center;animation:spin 12s linear infinite}"
-    ".stageglow{opacity:1;animation:stageglow 2.6s ease-in-out infinite}"
-    ".breathe{animation:breathe 3.4s ease-in-out infinite}"
-    "@keyframes rise{from{opacity:.01;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}"
-    "@keyframes fadeup{from{opacity:.01;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}"
-    "@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}"
-    "@keyframes flow{to{stroke-dashoffset:-32}}"
-    "@keyframes blink{0%,47%{opacity:1}48%,100%{opacity:.08}}"
-    "@keyframes floaty{from{transform:translateY(0)}to{transform:translateY(-4px)}}"
-    "@keyframes spin{to{transform:rotate(360deg)}}"
-    "@keyframes stageglow{0%,100%{opacity:.42}50%{opacity:1}}"
-    "@keyframes breathe{0%,100%{opacity:.55}50%{opacity:1}}"
-    "@media (prefers-reduced-motion:reduce){"
-    ".rise,.fadeup,.pulse,.flow,.blink,.floaty,.spin,.stageglow,.breathe{animation:none!important}"
-    ".motion-dot{display:none}}"
-)
+def css_for(p: dict[str, str]) -> str:
+    return (
+        ".sans{font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}"
+        ".mono{font-family:'JetBrains Mono','Cascadia Code',Consolas,monospace}"
+        f".text{{fill:{p['text']}}}.muted{{fill:{p['muted']}}}"
+        f".dim{{fill:{p['dim']}}}.accent{{fill:{p['accent']}}}"
+        ".rise{opacity:1;animation:rise .72s cubic-bezier(.22,.9,.3,1.05) both}"
+        ".fadeup{opacity:1;animation:fadeup .58s cubic-bezier(.22,.9,.3,1.05) both}"
+        ".pulse{opacity:1;animation:pulse 2.2s ease-in-out infinite}"
+        ".flow{stroke-dasharray:7 9;animation:flow 1.35s linear infinite}"
+        ".blink{opacity:1;animation:blink 1s step-end infinite}"
+        ".floaty{animation:floaty 4.8s ease-in-out infinite alternate}"
+        ".spin{transform-box:fill-box;transform-origin:center;animation:spin 12s linear infinite}"
+        ".stageglow{opacity:1;animation:stageglow 2.6s ease-in-out infinite}"
+        ".breathe{animation:breathe 3.4s ease-in-out infinite}"
+        "@keyframes rise{from{opacity:.01;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}"
+        "@keyframes fadeup{from{opacity:.01;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}"
+        "@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}"
+        "@keyframes flow{to{stroke-dashoffset:-32}}"
+        "@keyframes blink{0%,47%{opacity:1}48%,100%{opacity:.08}}"
+        "@keyframes floaty{from{transform:translateY(0)}to{transform:translateY(-4px)}}"
+        "@keyframes spin{to{transform:rotate(360deg)}}"
+        "@keyframes stageglow{0%,100%{opacity:.42}50%{opacity:1}}"
+        "@keyframes breathe{0%,100%{opacity:.55}50%{opacity:1}}"
+        "@media (prefers-reduced-motion:reduce){"
+        ".rise,.fadeup,.pulse,.flow,.blink,.floaty,.spin,.stageglow,.breathe"
+        "{animation:none!important}.motion-dot{display:none}}"
+    )
 
 
-def common_defs(p: dict[str, str], extra: str = "",
-                extra_styles: str = "") -> str:
-    return f'''<defs>
-<style>{COMMON_STYLES}{extra_styles}</style>
+def shared_defs(p: dict[str, str], extra: str = "") -> str:
+    return f'''<style>{css_for(p)}</style>
 <linearGradient id="cardGrad" x1="0" y1="0" x2="0" y2="1">
   <stop offset="0" stop-color="{p['card0']}"/><stop offset="1" stop-color="{p['card1']}"/>
 </linearGradient>
@@ -348,121 +316,147 @@ def common_defs(p: dict[str, str], extra: str = "",
 <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
   <path d="M40 0H0V40" fill="none" stroke="{p['grid']}" stroke-opacity=".03"/>
 </pattern>
-{extra}
-</defs>'''
+{extra}'''
 
 
-def shell(height: int, title: str, label: str, body: str,
-          p: dict[str, str], extra_defs: str = "",
-          clip_id: str = "card-inner", extra_styles: str = "") -> str:
-    defs = common_defs(
-        p,
-        f'''
-<clipPath id="clip-outer"><rect width="900" height="{height}" rx="24"/></clipPath>
-<clipPath id="clip-{clip_id}"><rect x="12" y="8" width="876" height="{height - 8}" rx="20"/></clipPath>{extra_defs}''',
-        extra_styles=extra_styles,
-    )
-    return f'''<svg width="900" height="{height}" viewBox="0 0 900 {height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="{esc(title)}">
-<title>{esc(title)}</title>
-{defs}
-<rect width="900" height="{height}" rx="24" fill="{p['bg']}"/>
+def outer_clip(height: int) -> str:
+    return f'<clipPath id="clip-outer"><rect width="900" height="{height}" rx="24"/></clipPath>'
+
+
+def card_clip(slug: str, height: int) -> str:
+    inner_h = height - 8
+    return (f'<clipPath id="clip-{slug}"><rect x="12" y="8" width="876" '
+            f'height="{inner_h}" rx="20"/></clipPath>')
+
+
+def outer_panel(height: int, p: dict[str, str]) -> str:
+    return f'''<rect width="900" height="{height}" rx="24" fill="{p['bg']}"/>
 <g clip-path="url(#clip-outer)">
 <rect width="900" height="{height}" rx="24" fill="url(#grid)"/>
 <ellipse cx="128" cy="8" rx="280" ry="112" fill="{p['accent']}" opacity=".09"/>
 <ellipse cx="820" cy="{height - 8}" rx="264" ry="120" fill="{p['accent2']}" opacity=".07"/>
 </g>
-<rect x=".5" y=".5" width="899" height="{height - 1}" rx="24" fill="none" stroke="{p['sheet']}" stroke-opacity=".12"/>
-<g class="rise">
-  <rect x="12" y="8" width="876" height="{height - 8}" rx="20" fill="url(#cardGrad)" stroke="{p['sheet']}" stroke-opacity=".12"/>
+<rect x=".5" y=".5" width="899" height="{height - 1}" rx="24" fill="none" stroke="{p['sheet']}" stroke-opacity=".12"/>'''
+
+
+def card_group(slug: str, label: str, height: int, body: str,
+               p: dict[str, str]) -> str:
+    inner_h = height - 8
+    return f'''<g class="rise">
+  <rect x="12" y="8" width="876" height="{inner_h}" rx="20" fill="url(#cardGrad)" stroke="{p['sheet']}" stroke-opacity=".12"/>
   <path d="M12 28a20 20 0 0 1 20-20h836a20 20 0 0 1 20 20v20H12z" fill="url(#headGrad)"/>
   <circle cx="36" cy="28" r="4" fill="#FF5F56"/>
   <circle cx="52" cy="28" r="4" fill="#FFBD2E"/>
   <circle class="pulse" cx="68" cy="28" r="4" fill="#27C93F"/>
   <text class="mono muted" x="450" y="32" font-size="10" text-anchor="middle"><tspan fill="{p['accent']}">//</tspan> {esc(label)}</text>
-  <g clip-path="url(#clip-{clip_id})">
+  <g clip-path="url(#clip-{slug})">
   {body}
   </g>
-</g>
+</g>'''
+
+
+def shell(
+    height: int, title: str, label: str, body: str,
+    p: dict[str, str], extra_defs: str = "", slug: str = "card",
+) -> str:
+    inner_defs = extra_defs + "\n" + outer_clip(height) + "\n" + card_clip(slug, height)
+    return f'''<svg width="{WIDTH}" height="{height}" viewBox="0 0 {WIDTH} {height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="{esc(title)}">
+<title>{esc(title)}</title>
+<defs>
+{shared_defs(p, inner_defs)}
+</defs>
+{outer_panel(height, p)}
+{card_group(slug, label, height, body, p)}
 </svg>'''
 
 
-def write_text(path: Path, content: str) -> None:
-    path.write_text(content, encoding="utf-8")
+def render_bento(sections: list[tuple[str, str, int, str, str]],
+                 p: dict[str, str],
+                 title: str = "VintlGvard — mission control profile") -> str:
+    GAP, PAD = 6, 12
+    y = PAD
+    groups: list[str] = []
+    clips: list[str] = []
+    extras: list[str] = []
+    for slug, _label, h, bd, extra in sections:
+        clips.append(card_clip(slug, h))
+        extras.append(extra)
+        groups.append(f'<g transform="translate(0 {y})">\n'
+                      f'{card_group(slug, _label, h, bd, p)}\n</g>')
+        y += h + GAP
+    total = y - GAP + PAD
+    defs = (shared_defs(p, "\n".join(extras)) + "\n"
+            + outer_clip(total) + "\n" + "\n".join(clips))
+    return (f'<svg width="{WIDTH}" height="{total}" viewBox="0 0 {WIDTH} {total}" '
+            f'xmlns="http://www.w3.org/2000/svg" role="img" aria-label="{esc(title)}">\n'
+            f'<title>{esc(title)}</title>\n<defs>\n{defs}\n</defs>\n'
+            f'{outer_panel(total, p)}\n' + "\n".join(groups) + '\n</svg>')
 
 
-def validate_svg(name: str, svg: str) -> None:
-    if not svg.startswith("<svg") or not svg.endswith("</svg>"):
-        raise ValueError(f"{name}: invalid SVG root")
-    for tag in ("text", "rect", "circle", "g", "defs", "style", "path", "mask",
-                "clipPath", "linearGradient", "pattern"):
-        opens = len(re.findall(rf"<{tag}(?:\s|>)", svg))
-        closes = len(re.findall(rf"</{tag}>", svg))
-        self_closing = len(re.findall(rf"<{tag}[^>]*?/>", svg))
-        if opens != closes + self_closing:
-            raise ValueError(
-                f"{name}: unbalanced <{tag}> "
-                f"({opens} open, {closes} close, {self_closing} self-closing)"
-            )
+def metric(value) -> str:
+    return "—" if value is None else str(value)
 
 
 def hero_parts(data: dict, p: dict[str, str]) -> tuple[str, str, int, str, str]:
     user = data["user"]
-    repos = data.get("repos") or []
-    stars = data.get("stars")
-    live_count = len([r for r in repos if not r.get("archived") and not r.get("fork")
-                      and r.get("name") != USER]) if repos else None
-    role_chips = [
-        ("Fullstack product engineer", True),
-        ("Go · TypeScript · Python", False),
-    ]
-    parts: list[str] = [
-        f'<text class="fadeup sans text" style="animation-delay:.08s" x="48" y="98" font-size="28" font-weight="800" fill="url(#nameGrad)">{esc(USER)}</text>',
-        f'<text class="fadeup mono" style="animation-delay:.16s" x="48" y="124" font-size="10.5" fill="{p["accent"]}"><tspan fill="{p["muted"]}">const</tspan> focus <tspan fill="{p["muted"]}">=</tspan> <tspan fill="{p["text"]}">["compilers/tui", "web-systems", "tools"]</tspan></text>',
-        f'<text class="fadeup sans muted" style="animation-delay:.22s" x="48" y="148" font-size="11.5">Building solid product foundations · terminal tools · clean architectures</text>',
-        f'<line class="fadeup" style="animation-delay:.26s" x1="48" y1="168" x2="180" y2="168" stroke="{p["accent"]}" stroke-width="1.2" stroke-opacity=".6"/>',
-        f'<rect class="blink" x="184" y="159" width="7" height="15" rx="1" fill="{p["accent"]}"/>',
-    ]
-    chip_x = 48
-    pill_parts: list[str] = []
-    for label, is_primary in role_chips:
-        w = max(52, int(round(char_units(label) * 6.5 + 24)))
-        fill = p["accent"] if is_primary else p["sheet"]
-        stroke = p["accent"] if is_primary else p["sheet"]
-        text_fill = p["accent"] if is_primary else p["text"]
-        pill_parts.append(
-            f'<rect x="{chip_x}" y="190" width="{w}" height="24" rx="12" '
-            f'fill="{fill}" fill-opacity="{"0.14" if is_primary else "0.05"}" '
-            f'stroke="{stroke}" stroke-opacity="{"0.55" if is_primary else "0.15"}"/>'
-            f'<text class="sans" x="{chip_x + 12}" y="206" font-size="10" '
-            f'font-weight="{"600" if is_primary else "400"}" fill="{text_fill}">{esc(label)}</text>'
-        )
-        chip_x += w + 8
+    repos = metric(user.get("public_repos"))
+    stars = metric(data.get("stars"))
+    followers = metric(user.get("followers"))
+    pill = "TypeScript + Go"
+    typed = "❯ whoami → Vitaliy"
 
-    stat_tokens = [
-        (f"{live_count} REPOS" if live_count is not None else "-- REPOS", p["accent"]),
-        (f"★ {stars}" if stars is not None else "★ --", p["text"]),
-        (f"{metric(user.get('followers'))} FOLLOWERS", p["muted"]),
-    ]
-    right_pill_w = 408
-    right_pill_x = 48
-    parts.append(f'''
+    cursor_x = 48 + len(typed) * 7.22 + 6
+    defs = '''
+<clipPath id="typeClip"><rect x="48" y="151" width="0" height="24">
+<animate attributeName="width" from="0" to="248" dur="1.4s" begin="0.45s" fill="freeze"/>
+</rect></clipPath>
+<clipPath id="bioClip"><rect x="48" y="126" width="560" height="20"/></clipPath>
+'''
+    body = f'''
+<g class="fadeup" style="animation-delay:.08s">
+  <text class="sans" x="48" y="104" font-size="34" font-weight="800" letter-spacing="-.8" fill="url(#nameGrad)">VintlGvard</text>
+  <rect x="48" y="116" width="8" height="3" rx="1.5" fill="url(#accentGrad)">
+    <animate attributeName="width" from="8" to="232" dur="0.9s" begin="0.18s" fill="freeze"/>
+  </rect>
+</g>
+<g clip-path="url(#bioClip)">
+  <text class="sans muted fadeup" x="48" y="142" font-size="12.5" style="animation-delay:.16s">Fullstack product engineer • TypeScript + Go • shipping ideas to production</text>
+</g>
+<g clip-path="url(#typeClip)">
+  <text class="mono text" x="48" y="172" font-size="12">{typed}</text>
+</g>
+<rect class="blink" x="{cursor_x:.0f}" y="159" width="7" height="15" rx="1" fill="{p['accent']}"/>
 <g class="fadeup" style="animation-delay:.28s">
-  <rect x="{right_pill_x}" y="190" width="{right_pill_w}" height="32" rx="16" fill="{p['sheet']}" fill-opacity=".06" stroke="{p['sheet']}" stroke-opacity=".12"/>
-  <text class="mono" x="{right_pill_x + 16}" y="210" font-size="10" fill="{stat_tokens[0][1]}">{esc(stat_tokens[0][0])}</text>
-  <line x1="{right_pill_x + 88}" y1="198" x2="{right_pill_x + 88}" y2="214" stroke="{p['sheet']}" stroke-opacity=".14"/>
-  <text class="mono text" x="{right_pill_x + 104}" y="210" font-size="10">{esc(stat_tokens[1][0])}</text>
-  <line x1="{right_pill_x + 156}" y1="198" x2="{right_pill_x + 156}" y2="214" stroke="{p['sheet']}" stroke-opacity=".14"/>
-  <text class="mono muted" x="{right_pill_x + 172}" y="210" font-size="10">{esc(stat_tokens[2][0])}</text>
-  <circle class="pulse" cx="{right_pill_x + right_pill_w - 20}" cy="206" r="3.5" fill="{p['green']}"/>
-</g>''')
-    body = "".join(parts)
-    return ("hero", "mission control / identity", 244, body, "")
+  <rect x="48" y="190" width="408" height="32" rx="16" fill="{p['sheet']}" fill-opacity=".06" stroke="{p['sheet']}" stroke-opacity=".12"/>
+  <text class="mono" x="64" y="210" font-size="10" fill="{p['accent']}">{repos} REPOS</text>
+  <line x1="136" y1="198" x2="136" y2="214" stroke="{p['sheet']}" stroke-opacity=".14"/>
+  <text class="mono text" x="152" y="210" font-size="10">★ {stars}</text>
+  <line x1="204" y1="198" x2="204" y2="214" stroke="{p['sheet']}" stroke-opacity=".14"/>
+  <text class="mono text" x="220" y="210" font-size="10">{followers} FOLLOWERS</text>
+  <line x1="312" y1="198" x2="312" y2="214" stroke="{p['sheet']}" stroke-opacity=".14"/>
+  <text class="mono muted" x="328" y="210" font-size="9.5">{pill}</text>
+</g>
+<g class="fadeup" style="animation-delay:.2s">
+  <circle cx="808" cy="110" r="30" fill="{p['card1']}" stroke="{p['sheet']}" stroke-opacity=".1"/>
+  <circle class="spin" cx="808" cy="110" r="25" fill="none" stroke="url(#accentGrad)" stroke-width="1.6" stroke-dasharray="11 8" opacity=".78"/>
+  <text class="mono" x="808" y="117" font-size="18" font-weight="700" text-anchor="middle" fill="{p['accent']}">❯</text>
+  <circle class="pulse" cx="680" cy="110" r="5" fill="{p['green']}"/>
+  <text class="mono" x="692" y="114" font-size="9.5" fill="{p['text']}">OPEN TO WORK</text>
+  <text class="mono muted" x="680" y="134" font-size="9">reply &lt; 24h</text>
+</g>
+<g class="floaty fadeup" style="animation-delay:.32s">
+  <rect x="680" y="166" width="172" height="40" rx="20" fill="url(#accentGrad)"/>
+  <text class="mono" x="766" y="191" font-size="11" font-weight="800" text-anchor="middle" fill="#041916">vintlgvard.com</text>
+</g>
+'''
+    return ("hero", "identity / mission control", 238, body, defs)
 
 
 ICONS = {
-    "plane": '<path d="m1.5 6 9.5-4.5-4 9.5-1.8-3.6zM5.2 7.4l4-4"/>',
-    "globe": '<circle cx="6" cy="6" r="4.8"/>'
-             '<path d="M1.2 6h9.6M6 1.2a7.5 7.5 0 0 0 0 9.6M6 1.2a7.5 7.5 0 0 1 0 9.6"/>',
+
+    "plane": '<path d="M11.6 1.2 1.1 5.1c-.8.3-.8.8-.1 1l2.6.8 1 3.1c.1.4.2.5.5.5.2 0 .4-.1.5-.3l1.4-1.3 2.7 2c.5.3.8.1 1-.4l1.6-7.9c.1-.7-.3-1-.8-.9zM4.6 6.9l6-3.8c.3-.2.5-.1.3.1l-5 4.5-.2 2-1.1-2.8z"/>',
+    "globe": '<circle cx="6" cy="6" r="5"/>'
+             '<path d="M1 6h10M6 1a8 8 0 0 1 0 10A8 8 0 0 1 6 1"/>',
     "git": '<circle cx="4" cy="3.5" r="1.6"/>'
            '<circle cx="4" cy="9.5" r="1.6"/>'
            '<circle cx="9.5" cy="4.6" r="1.6"/>'
@@ -526,74 +520,78 @@ def _progress(data: dict) -> int:
         pushed = str(repo.get("pushed_at") or "")
         if pushed > newest:
             newest = pushed
-    age = relative_age(newest)
-    if "today" in age or "yesterday" in age:
-        return 92
-    if "d ago" in age:
-        try:
-            d = int(re.findall(r"\d+", age)[0])
-            return max(35, 90 - d * 2)
-        except (IndexError, ValueError):
-            return 60
-    return 35
+    try:
+        age = (date.today()
+               - date.fromisoformat(newest[:10])).days
+    except ValueError:
+        return 2
+    return 4 if age <= 14 else (3 if age <= FRESH_WINDOW_DAYS else 2)
+
+
+def stage(x: int, label: str, index: int, lit: bool, p: dict[str, str]) -> str:
+    color = p["accent"] if lit else p["dim"]
+    opacity = ".16" if lit else ".08"
+    return f'''
+<g class="fadeup" style="animation-delay:{.08 + index * .08:.2f}s">
+  <circle class="stageglow" style="animation-delay:{index * .45:.2f}s" cx="{x}" cy="96" r="18" fill="{color}" opacity="{opacity}"/>
+  <circle cx="{x}" cy="96" r="7" fill="{p['bg']}" stroke="{color}" stroke-width="2"/>
+  <circle cx="{x}" cy="96" r="2.5" fill="{color}"/>
+  <text class="mono" x="{x}" y="130" font-size="10" text-anchor="middle" fill="{p['text']}">{label}</text>
+  <text class="mono muted" x="{x}" y="144" font-size="9.5" text-anchor="middle">0{index + 1}</text>
+</g>'''
 
 
 def shipping_parts(data: dict, p: dict[str, str]) -> tuple[str, str, int, str, str]:
-    shipping = data.get("shipping") or []
-    stages = [
-        ("IDEA", "01", "research &amp; spec", .10),
-        ("ARCH", "02", "system design", .18),
-        ("BUILD", "03", "implementation", .26),
-        ("PROVE", "04", "tests &amp; metrics", .34),
-        ("RUN", "05", "prod &amp; telemetry", .42),
-    ]
-    parts: list[str] = []
-    tile_w, tile_h, gap, x0 = 160, 68, 16, 48
-    bar_w = 4 * (tile_w + gap)
-    progress_pct = _progress(data)
-    parts.append(f'''
-<g class="fadeup" style="animation-delay:.08s">
-  <line x1="{x0 + 40}" y1="84" x2="{x0 + bar_w}" y2="84" stroke="{p['sheet']}" stroke-opacity=".12" stroke-width="2"/>
-  <line class="flow" x1="{x0 + 40}" y1="84" x2="{x0 + bar_w}" y2="84" stroke="{p['accent']}" stroke-width="2" stroke-opacity=".7"/>
-  <circle class="stageglow" cx="{x0 + 40 + int((bar_w - 40) * progress_pct / 100)}" cy="84" r="5" fill="{p['accent']}"/>
-</g>''')
-    for i, (name, num, desc, delay) in enumerate(stages):
-        x = x0 + i * (tile_w + gap)
-        active = i <= 2
-        bg = p["card1"] if active else p["bg"]
-        accent = p["accent"] if active else p["dim"]
-        parts.append(f'''
-<g class="fadeup" style="animation-delay:{delay:.2f}s">
-  <rect x="{x}" y="100" width="{tile_w}" height="{tile_h}" rx="14" fill="{bg}" stroke="{p['sheet']}" stroke-opacity="{'0.14' if active else '0.06'}"/>
-  <text class="mono" x="{x + 14}" y="122" font-size="9" fill="{accent}">{num}</text>
-  <text class="mono text" x="{x + 36}" y="122" font-size="11" font-weight="700">{name}</text>
-  <text class="sans muted" x="{x + 14}" y="148" font-size="10">{desc}</text>
-</g>''')
-    y_feed = 186
-    parts.append(
-        f'<text class="fadeup mono muted" style="animation-delay:.48s" '
-        f'x="48" y="{y_feed}" font-size="9.5"><tspan fill="{p["accent"]}">'
-        f'RECENT DEPLOYS</tspan> // tracked via git activity</text>'
+    progress = _progress(data)
+    stage_x = (150, 350, 550, 750)
+    stages = "".join(
+        stage(x, label, i, lit=(i < progress), p=p)
+        for i, (x, label) in enumerate(zip(stage_x, ("IDEA", "BUILD", "SHIP", "RUN")))
     )
-    for i, repo in enumerate(shipping[:3]):
-        y = y_feed + 12 + i * 44
-        name = repo.get("name", "repo")
-        lang = repo.get("language") or "code"
-        stars = repo.get("stargazers_count") or 0
-        desc = truncate(repo.get("description") or "No description", 58, 52)
-        age = relative_age(str(repo.get("pushed_at") or ""))
-        parts.append(f'''
-<g class="fadeup" style="animation-delay:{.52 + i * .08:.2f}s">
-  <rect x="48" y="{y}" width="804" height="36" rx="10" fill="{p['sheet']}" fill-opacity=".04" stroke="{p['sheet']}" stroke-opacity=".08"/>
-  <circle cx="64" cy="{y + 18}" r="3" fill="{p['accent']}"/>
-  <text class="mono text" x="78" y="{y + 22}" font-size="11" font-weight="700">{esc(name)}</text>
-  <text class="sans muted" x="240" y="{y + 22}" font-size="10.5">{esc(desc)}</text>
-  <text class="mono" x="690" y="{y + 22}" font-size="9.5" fill="{p['accent']}">{esc(lang)}</text>
-  <text class="mono text" x="760" y="{y + 22}" font-size="9.5">★ {stars}</text>
-  <text class="mono muted" x="840" y="{y + 22}" font-size="9" text-anchor="end">{esc(age)}</text>
+    line = f'''
+<path d="M150 96H750" fill="none" stroke="{p['sheet']}" stroke-opacity=".1" stroke-width="8" stroke-linecap="round"/>
+<path d="M150 96H750" fill="none" stroke="url(#accentGrad)" stroke-opacity=".58" stroke-width="2" stroke-linecap="round"/>
+<path class="flow" d="M150 96H750" fill="none" stroke="{p['text']}" stroke-opacity=".22" stroke-width="1"/>
+<circle class="motion-dot" r="4" fill="{p['accent']}"><animateMotion dur="9s" repeatCount="indefinite" path="M150 96H750"/></circle>
+{stages}
+'''
+    defs: list[str] = []
+    cards: list[str] = []
+    if data.get("shipping"):
+        for i, repo in enumerate(data["shipping"]):
+            y = 160 + i * 72
+            name = truncate(repo.get("name") or "untitled", 34, 29)
+            desc = truncate(repo.get("description") or "No description in GitHub API", 54, 51)
+            lang = truncate(repo.get("language") or "—", 18, 16)
+            stars = int(repo.get("stargazers_count") or 0)
+            pushed = fmt_date(repo.get("pushed_at"))
+            clip_id = f"shipCard{i}"
+            defs.append(
+                f'<clipPath id="{clip_id}"><rect x="48" y="{y}" width="804" height="56" rx="14"/></clipPath>'
+            )
+            cards.append(f'''
+<g class="fadeup" style="animation-delay:{.36 + i * .10:.2f}s">
+  <rect x="48" y="{y}" width="804" height="56" rx="14" fill="{p['sheet']}" fill-opacity=".05" stroke="{p['sheet']}" stroke-opacity=".12"/>
+  <g clip-path="url(#{clip_id})">
+  <rect class="breathe" style="animation-delay:{i * .35:.2f}s" x="48" y="{y}" width="3" height="56" fill="url(#accentGrad)"/>
+  <circle class="pulse" style="animation-delay:{.6 + i * .3:.2f}s" cx="72" cy="{y + 28}" r="5" fill="{p['accent']}" opacity=".9"/>
+  <text class="sans text" x="88" y="{y + 23}" font-size="12.5" font-weight="700">{esc(name)}</text>
+  <text class="sans muted" x="88" y="{y + 41}" font-size="10.5">{esc(desc)}</text>
+  <text class="mono text" x="828" y="{y + 22}" font-size="10" text-anchor="end">★ {stars}</text>
+  <text class="mono muted" x="828" y="{y + 41}" font-size="9.5" text-anchor="end">{esc(lang)} · {esc(pushed)}</text>
+  </g>
 </g>''')
-    last_y = y_feed + 12 + max(len(shipping[:3]), 1) * 44
-    return ("shipping", "pipeline / idea to run", last_y + 14, "".join(parts), "")
+    else:
+        reason = truncate(data.get("reason") or "GitHub API unavailable", 68, 62)
+        cards.append(f'''
+<g class="fadeup" style="animation-delay:.32s">
+  <rect x="48" y="168" width="804" height="128" rx="16" fill="{p['sheet']}" fill-opacity=".04" stroke="{p['sheet']}" stroke-opacity=".12"/>
+  <text class="mono" x="72" y="208" font-size="11" fill="{p['muted']}">LIVE DATA UNAVAILABLE</text>
+  <text class="sans text" x="72" y="236" font-size="14" font-weight="700">No project metadata was fabricated.</text>
+  <text class="mono muted" x="72" y="264" font-size="9.5">{esc(reason)}</text>
+</g>''')
+    return ("shipping", "now shipping / live from GitHub API", 384,
+            line + "".join(cards), "\n".join(defs))
 
 
 def stack_parts(data: dict, p: dict[str, str]) -> tuple[str, str, int, str, str]:
@@ -660,53 +658,48 @@ def stats_parts(data: dict, p: dict[str, str]) -> tuple[str, str, int, str, str]
     return ("stats", "telemetry / five signals", 176, body, "")
 
 
-def render_bento(cards: list[tuple[str, str, int, str, str]],
-                 p: dict[str, str], title: str) -> str:
-    y_cursor = 8
-    g_elements: list[str] = []
-    card_clips: list[str] = []
-    for slug, label, h, body, defs in cards:
-        card_y = y_cursor
-        clip_id = f"bento-{slug}"
-        card_clips.append(
-            f'<clipPath id="clip-{clip_id}"><rect x="12" y="{card_y}" width="876" height="{h}" rx="20"/></clipPath>'
-        )
-        if defs:
-            card_clips.append(defs)
-        header = f'''
-  <path d="M12 {card_y + 20}a20 20 0 0 1 20-20h836a20 20 0 0 1 20 20v20H12z" fill="url(#headGrad)"/>
-  <circle cx="36" cy="{card_y + 20}" r="4" fill="#FF5F56"/>
-  <circle cx="52" cy="{card_y + 20}" r="4" fill="#FFBD2E"/>
-  <circle class="pulse" cx="68" cy="{card_y + 20}" r="4" fill="#27C93F"/>
-  <text class="mono muted" x="450" y="{card_y + 24}" font-size="10" text-anchor="middle"><tspan fill="{p['accent']}">//</tspan> {esc(label)}</text>'''
-        g_elements.append(f'''
-<g class="rise">
-  <rect x="12" y="{card_y}" width="876" height="{h}" rx="20" fill="url(#cardGrad)" stroke="{p['sheet']}" stroke-opacity=".12"/>
-  {header}
-  <g clip-path="url(#clip-{clip_id})" transform="translate(0 {card_y - 8})">
-  {body}
-  </g>
-</g>''')
-        y_cursor += h + 16
-    total_height = y_cursor - 16 + 8
-    defs = common_defs(
-        p,
-        f'''
-<clipPath id="clip-outer"><rect width="900" height="{total_height}" rx="24"/></clipPath>
-{''.join(card_clips)}''',
-    )
-    return f'''<svg width="900" height="{total_height}" viewBox="0 0 900 {total_height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="{esc(title)}">
-<title>{esc(title)}</title>
-{defs}
-<rect width="900" height="{total_height}" rx="24" fill="{p['bg']}"/>
-<g clip-path="url(#clip-outer)">
-<rect width="900" height="{total_height}" rx="24" fill="url(#grid)"/>
-<ellipse cx="128" cy="8" rx="280" ry="112" fill="{p['accent']}" opacity=".09"/>
-<ellipse cx="820" cy="{total_height - 8}" rx="264" ry="120" fill="{p['accent2']}" opacity=".07"/>
-</g>
-<rect x=".5" y=".5" width="899" height="{total_height - 1}" rx="24" fill="none" stroke="{p['sheet']}" stroke-opacity=".12"/>
-{''.join(g_elements)}
-</svg>'''
+def validate_svg(name: str, svg: str) -> None:
+    if not svg.lstrip().startswith("<svg"):
+        raise ValueError(f"{name}: root is not <svg>")
+    if re.search(r"<image[\s>/]", svg):
+        raise ValueError(f"{name}: external <image> element is forbidden")
+    if len(re.findall(r"<filter[\s>]", svg)) > 2:
+        raise ValueError(f"{name}: too many filters (perf budget)")
+    if "feturbulence" in svg.lower():
+        raise ValueError(f"{name}: heavy noise filter detected")
+    if "@media (prefers-reduced-motion:reduce)" not in svg:
+        raise ValueError(f"{name}: missing reduced-motion fallback")
+    if "animation:none!important" not in svg:
+        raise ValueError(f"{name}: reduced-motion does not disable CSS animations")
+    body = svg.replace('xmlns="http://www.w3.org/2000/svg"', "")
+
+
+    if re.search(r'''(?:href|xlink:href|src)\s*=\s*["']https?://''', body):
+        raise ValueError(f"{name}: external URL attribute inside SVG")
+    if 'viewBox="0 0 900 ' not in svg:
+        raise ValueError(f"{name}: missing scalable viewBox")
+
+
+def validate_text_constraints(data: dict) -> None:
+    bio = "Fullstack product engineer • TypeScript + Go • shipping ideas to production"
+    if char_units(bio) > 92:
+        raise ValueError("hero bio exceeds clipped width")
+    for repo in data.get("shipping") or []:
+        name = truncate(repo.get("name") or "untitled", 34, 29)
+        desc = truncate(repo.get("description") or "No description", 54, 51)
+        if len(desc) > 54 or char_units(name) > 29.1 or char_units(desc) > 51.1:
+            raise ValueError(f"shipping card overflow: {name}")
+    for value in (metric(data.get("stars")),
+                  metric(data["user"].get("public_repos")),
+                  metric(data["user"].get("followers"))):
+        if len(value) > 10:
+            raise ValueError(f"stat tile overflow: {value}")
+
+
+def write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8", newline="\n")
+
 
 
 def connect(token):
@@ -726,43 +719,31 @@ def fetch_identity(token):
 
 
 def main() -> None:
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--fixture")
-    parser.add_argument("--preview")
-    parser.add_argument("--root")
-    args = parser.parse_args()
-
-    root = resolve_root(args.root)
-    cache_path = root / ".lang-cache.json"
-    cache = load_cache(cache_path)
+    root = resolve_root(None)
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-    data = get_data(token, args.fixture, cache)
+    try:
+        user, repos = fetch_identity(token)
+    except Exception as exc:
+        raise SystemExit(f"generate: GitHub unavailable: {exc}")
+    stars = sum(int(r.get("stargazers_count") or 0) for r in repos)
+    data = {"user": user, "repos": repos, "stars": stars, "shipping": [],
+            "languages": [], "languages_source": "none", "offline": False,
+            "reason": "static"}
     p = THEMES["dark"]
-    all_parts = [hero_parts(data, p), contact_parts(data, p),
-                 shipping_parts(data, p), stack_parts(data, p),
-                 stats_parts(data, p)]
-    by_slug = {s[0]: s for s in all_parts}
-
     svgs = {}
-    for slug in ("hero", "contact", "shipping", "stack", "stats"):
-        _, label, h, body, defs = by_slug[slug]
+    for fn in (hero_parts, contact_parts):
+        slug, label, h, body, defs = fn(data, p)
         svgs[f"{slug}.svg"] = shell(h, TITLES[slug], label, body, p, defs, slug)
-    svgs["profile.svg"] = render_bento(all_parts, p, BENTO_TITLE)
-
+    validate_text_constraints(data)
     for name, svg in svgs.items():
         validate_svg(name, svg)
-
     out = root / "assets"
     out.mkdir(parents=True, exist_ok=True)
     for name, svg in svgs.items():
         write_text(out / name, svg)
-    save_cache(cache_path, cache)
-
-    api = data.get("api") or {}
-    print(f"[ok] generated: {', '.join(svgs.keys())} "
-          f"({sum(len(s.encode()) for s in svgs.values()) / 1024:.1f} KiB) "
-          f"api: {api.get('fetched', 0)} fetched / {api.get('cached', 0)} cached")
+    total_kib = sum(len(s.encode()) for s in svgs.values()) / 1024
+    print(f"[ok] static hero.svg + contact.svg ({total_kib:.1f} KiB) "
+          f"stars={stars}")
 
 
 if __name__ == "__main__":
