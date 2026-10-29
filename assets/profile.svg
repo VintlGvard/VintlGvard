@@ -70,7 +70,7 @@
   <rect x="48" y="190" width="408" height="32" rx="16" fill="#FFFFFF" fill-opacity=".06" stroke="#FFFFFF" stroke-opacity=".12"/>
   <text class="mono" x="64" y="210" font-size="10" fill="#00E5CC">14 REPOS</text>
   <line x1="136" y1="198" x2="136" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
-  <text class="mono text" x="152" y="210" font-size="10">★ 8</text>
+  <text class="mono text" x="152" y="210" font-size="10">★ 9</text>
   <line x1="204" y1="198" x2="204" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
   <text class="mono text" x="220" y="210" font-size="10">2 FOLLOWERS</text>
   <line x1="312" y1="198" x2="312" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
@@ -377,7 +377,7 @@
 </g>
 <g class="floaty fadeup" style="animation-delay:0.17s">
   <rect x="208" y="76" width="148" height="80" rx="16" fill="#FFFFFF" fill-opacity=".05" stroke="#FFFFFF" stroke-opacity=".12"/>
-  <text class="sans text" x="224" y="106" font-size="23" font-weight="800">8</text>
+  <text class="sans text" x="224" y="106" font-size="23" font-weight="800">9</text>
   <rect class="breathe" style="animation-delay:0.70s" x="224" y="114" width="5" height="2" rx="1" fill="url(#accentGrad)">
     <animate attributeName="width" from="5" to="52" dur=".7s" begin="0.27s" fill="freeze"/>
   </rect>
