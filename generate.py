@@ -20,14 +20,14 @@ logger = logging.getLogger(__name__)
 
 
 USER = "VintlGvard"
-SHOWCASE = ("portfolio-v3", "Steam_PricePerHour", "breweryx-recipe-gen")
+SHOWCASE = ("portfolio-v3", "LugoTUI", "breweryx-recipe-gen")
 
 
-SKILLS = ("JavaScript", "Python", "Go",
-          "TypeScript", "React", "Node.js", "Django", "Tailwind", "FastAPI",
+SKILLS = ("TypeScript", "Go", "JavaScript", "Python",
+          "React", "Node.js", "Django", "Tailwind", "FastAPI",
           "Webpack", "PostgreSQL", "Docker", "Linux", "Bash", "Git",
           "MySQL", "SQLite", "Nginx", "Electron", "Lua")
-SKILLS_CORE = ("JavaScript", "Python", "Go")
+SKILLS_CORE = ("TypeScript", "Go")
 CONTACTS = (
     ("plane", "@VintlGvard", "telegram"),
     ("globe", "vintlgvard.com", "website"),
@@ -37,7 +37,7 @@ CONTACTS = (
 REPLY_NOTE = "reply < 24h"
 DIVIDER_X = 450
 CHIP_LIMIT = 434
-SHOWCASE_BOOST = 40
+SHOWCASE_BOOST = 20
 STAR_WEIGHT = 3
 FRESH_WINDOW_DAYS = 30
 WIDTH = 900
@@ -421,19 +421,49 @@ def render_bento(sections: list[tuple[str, str, int, str, str]],
             f'{outer_panel(total, p)}\n' + "\n".join(groups) + '\n</svg>')
 
 
-def metric(value) -> str:
+def metric(value: Any) -> str:
     return "—" if value is None else str(value)
 
 
-def hero_parts(data: dict, p: dict[str, str]) -> tuple[str, str, int, str, str]:
+def plural_label(value: Any, singular: str, plural: str) -> str:
+    if value is None:
+        return f"— {plural}"
+    try:
+        word = singular if int(value) == 1 else plural
+    except (TypeError, ValueError):
+        word = plural
+    return f"{value} {word}"
+
+
+def hero_parts(data: dict[str, Any], p: dict[str, str]) -> tuple[str, str, int, str, str]:
     user = data["user"]
-    repos = metric(user.get("public_repos"))
     stars = metric(data.get("stars"))
-    followers = metric(user.get("followers"))
     pill = "TypeScript + Go"
     typed = "❯ whoami → Vitaliy"
 
     cursor_x = 48 + len(typed) * 7.22 + 6
+    segments = (
+        (plural_label(user.get("public_repos"), "REPO", "REPOS"), p["accent"], "10"),
+        (f"★ {stars}", p["text"], "10"),
+        (plural_label(user.get("followers"), "FOLLOWER", "FOLLOWERS"), p["text"], "10"),
+        (pill, p["muted"], "9.5"),
+    )
+    seg_x = 64
+    pill_parts: list[str] = []
+    for idx, (label_text, fill_color, font_sz) in enumerate(segments):
+        if idx > 0:
+            pill_parts.append(
+                f'  <line x1="{seg_x}" y1="198" x2="{seg_x}" y2="214" '
+                f'stroke="{p["sheet"]}" stroke-opacity=".14"/>'
+            )
+            seg_x += 16
+        pill_parts.append(
+            f'  <text class="mono" x="{seg_x}" y="210" font-size="{font_sz}" '
+            f'fill="{fill_color}">{esc(label_text)}</text>'
+        )
+        seg_x += max(36, round(char_units(label_text) * 6.8)) + 16
+    pill_w = min(616, max(408, seg_x - 48))
+    pill_body = "\n".join(pill_parts)
     defs = '''
 <clipPath id="typeClip"><rect x="48" y="151" width="0" height="24">
 <animate attributeName="width" from="0" to="248" dur="1.4s" begin="0.45s" fill="freeze"/>
@@ -455,14 +485,8 @@ def hero_parts(data: dict, p: dict[str, str]) -> tuple[str, str, int, str, str]:
 </g>
 <rect class="blink" x="{cursor_x:.0f}" y="159" width="7" height="15" rx="1" fill="{p['accent']}"/>
 <g class="fadeup" style="animation-delay:.28s">
-  <rect x="48" y="190" width="408" height="32" rx="16" fill="{p['sheet']}" fill-opacity=".06" stroke="{p['sheet']}" stroke-opacity=".12"/>
-  <text class="mono" x="64" y="210" font-size="10" fill="{p['accent']}">{repos} REPOS</text>
-  <line x1="136" y1="198" x2="136" y2="214" stroke="{p['sheet']}" stroke-opacity=".14"/>
-  <text class="mono text" x="152" y="210" font-size="10">★ {stars}</text>
-  <line x1="204" y1="198" x2="204" y2="214" stroke="{p['sheet']}" stroke-opacity=".14"/>
-  <text class="mono text" x="220" y="210" font-size="10">{followers} FOLLOWERS</text>
-  <line x1="312" y1="198" x2="312" y2="214" stroke="{p['sheet']}" stroke-opacity=".14"/>
-  <text class="mono muted" x="328" y="210" font-size="9.5">{pill}</text>
+  <rect x="48" y="190" width="{pill_w}" height="32" rx="16" fill="{p['sheet']}" fill-opacity=".06" stroke="{p['sheet']}" stroke-opacity=".12"/>
+{pill_body}
 </g>
 <g class="fadeup" style="animation-delay:.2s">
   <circle cx="808" cy="110" r="30" fill="{p['card1']}" stroke="{p['sheet']}" stroke-opacity=".1"/>
@@ -501,11 +525,12 @@ def skill_chips(p: dict[str, str], delay_base: float = .10) -> tuple[str, int]:
         w = max(52, round(char_units(name) * 7.1 + 28))
         if x + w > CHIP_LIMIT:
             x, row_y = 48, row_y + 36
-        color = p["accent"] if core else p["dim"]
+        border = p["accent"] if core else p["dim"]
+        text_fill = p["accent"] if core else p["muted"]
         parts.append(f'''
 <g class="fadeup" style="animation-delay:{delay_base + i * .06:.2f}s">
-  <rect x="{x}" y="{row_y}" width="{w}" height="28" rx="14" fill="{color}" fill-opacity="{'0.12' if core else '0.08'}" stroke="{color}" stroke-opacity=".45"/>
-  <text class="sans" x="{x + 13}" y="{row_y + 19}" font-size="11" fill="{color}">{esc(name)}</text>
+  <rect x="{x}" y="{row_y}" width="{w}" height="28" rx="14" fill="{border}" fill-opacity="{'0.12' if core else '0.08'}" stroke="{border}" stroke-opacity=".45"/>
+  <text class="sans" x="{x + 13}" y="{row_y + 19}" font-size="11" fill="{text_fill}">{esc(name)}</text>
 </g>''')
         x += w + 8
     return "".join(parts), row_y
@@ -623,7 +648,11 @@ def shipping_parts(data: dict, p: dict[str, str]) -> tuple[str, str, int, str, s
 
 def stack_parts(data: dict, p: dict[str, str]) -> tuple[str, str, int, str, str]:
     langs = data.get("languages") or []
-    top = langs[:5]
+    top = list(langs[:5])
+    if top:
+        rem = round(100.0 - sum(float(pct) for _, pct in top), 1)
+        if rem >= 0.1 and (len(langs) > 5 or rem >= 0.2):
+            top.append(("Other", rem))
     bars_y = 76
     bar_parts: list[str] = []
     if top:
@@ -725,6 +754,45 @@ def validate_text_constraints(data: dict) -> None:
 
 def write_text(path: Path, text: str) -> None:
     _write_atomic(path, text)
+
+
+def render_readme(data: dict[str, Any]) -> str:
+    links = [
+        '<a href="https://vintlgvard.com">Website</a>',
+        '<a href="https://t.me/VintlGvard">Telegram</a>',
+        '<a href="mailto:me@vintlgvard.com">Email</a>',
+    ]
+    for repo in data.get("shipping") or []:
+        name = str(repo.get("name") or "").strip()
+        if name:
+            safe_name = esc(name)
+            links.append(f'<a href="https://github.com/{USER}/{safe_name}">{safe_name}</a>')
+    nav = " ·\n    ".join(links)
+    return (
+        "<!-- AUTO:START -->\n"
+        '<div align="center">\n'
+        '  <a href="https://vintlgvard.com">\n'
+        '    <img src="./assets/profile.svg" width="900" alt="VintlGvard — mission control: identity, shipline, stack, telemetry" />\n'
+        "  </a>\n"
+        "  <p>\n"
+        f"    {nav}\n"
+        "  </p>\n"
+        "</div>\n"
+        "<!-- AUTO:END -->"
+    )
+
+
+def update_readme(path: Path, block: str) -> None:
+    if path.exists():
+        existing = path.read_text(encoding="utf-8")
+        pattern = re.compile(r"<!-- AUTO:START -->.*?<!-- AUTO:END -->", re.DOTALL)
+        if pattern.search(existing):
+            updated = pattern.sub(lambda _: block, existing, count=1)
+            if not updated.endswith("\n"):
+                updated += "\n"
+            _write_atomic(path, updated)
+            return
+    _write_atomic(path, block + "\n")
 
 
 def connect(token: str | None) -> Github:

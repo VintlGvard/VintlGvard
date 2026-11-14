@@ -40,83 +40,83 @@
 
 <g class="fadeup" style="animation-delay:0.10s">
   <rect x="48" y="76" width="85" height="28" rx="14" fill="#00E5CC" fill-opacity="0.12" stroke="#00E5CC" stroke-opacity=".45"/>
-  <text class="sans" x="61" y="95" font-size="11" fill="#00E5CC">JavaScript</text>
+  <text class="sans" x="61" y="95" font-size="11" fill="#00E5CC">TypeScript</text>
 </g>
 <g class="fadeup" style="animation-delay:0.16s">
-  <rect x="141" y="76" width="64" height="28" rx="14" fill="#00E5CC" fill-opacity="0.12" stroke="#00E5CC" stroke-opacity=".45"/>
-  <text class="sans" x="154" y="95" font-size="11" fill="#00E5CC">Python</text>
+  <rect x="141" y="76" width="52" height="28" rx="14" fill="#00E5CC" fill-opacity="0.12" stroke="#00E5CC" stroke-opacity=".45"/>
+  <text class="sans" x="154" y="95" font-size="11" fill="#00E5CC">Go</text>
 </g>
 <g class="fadeup" style="animation-delay:0.22s">
-  <rect x="213" y="76" width="52" height="28" rx="14" fill="#00E5CC" fill-opacity="0.12" stroke="#00E5CC" stroke-opacity=".45"/>
-  <text class="sans" x="226" y="95" font-size="11" fill="#00E5CC">Go</text>
+  <rect x="201" y="76" width="85" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
+  <text class="sans" x="214" y="95" font-size="11" fill="#8B95A5">JavaScript</text>
 </g>
 <g class="fadeup" style="animation-delay:0.28s">
-  <rect x="273" y="76" width="85" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="286" y="95" font-size="11" fill="#5B6472">TypeScript</text>
+  <rect x="294" y="76" width="64" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
+  <text class="sans" x="307" y="95" font-size="11" fill="#8B95A5">Python</text>
 </g>
 <g class="fadeup" style="animation-delay:0.34s">
   <rect x="366" y="76" width="58" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="379" y="95" font-size="11" fill="#5B6472">React</text>
+  <text class="sans" x="379" y="95" font-size="11" fill="#8B95A5">React</text>
 </g>
 <g class="fadeup" style="animation-delay:0.40s">
   <rect x="48" y="112" width="67" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="61" y="131" font-size="11" fill="#5B6472">Node.js</text>
+  <text class="sans" x="61" y="131" font-size="11" fill="#8B95A5">Node.js</text>
 </g>
 <g class="fadeup" style="animation-delay:0.46s">
   <rect x="123" y="112" width="64" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="136" y="131" font-size="11" fill="#5B6472">Django</text>
+  <text class="sans" x="136" y="131" font-size="11" fill="#8B95A5">Django</text>
 </g>
 <g class="fadeup" style="animation-delay:0.52s">
   <rect x="195" y="112" width="67" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="208" y="131" font-size="11" fill="#5B6472">Tailwind</text>
+  <text class="sans" x="208" y="131" font-size="11" fill="#8B95A5">Tailwind</text>
 </g>
 <g class="fadeup" style="animation-delay:0.58s">
   <rect x="270" y="112" width="69" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="283" y="131" font-size="11" fill="#5B6472">FastAPI</text>
+  <text class="sans" x="283" y="131" font-size="11" fill="#8B95A5">FastAPI</text>
 </g>
 <g class="fadeup" style="animation-delay:0.64s">
   <rect x="347" y="112" width="71" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="360" y="131" font-size="11" fill="#5B6472">Webpack</text>
+  <text class="sans" x="360" y="131" font-size="11" fill="#8B95A5">Webpack</text>
 </g>
 <g class="fadeup" style="animation-delay:0.70s">
   <rect x="48" y="148" width="90" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="61" y="167" font-size="11" fill="#5B6472">PostgreSQL</text>
+  <text class="sans" x="61" y="167" font-size="11" fill="#8B95A5">PostgreSQL</text>
 </g>
 <g class="fadeup" style="animation-delay:0.76s">
   <rect x="146" y="148" width="64" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="159" y="167" font-size="11" fill="#5B6472">Docker</text>
+  <text class="sans" x="159" y="167" font-size="11" fill="#8B95A5">Docker</text>
 </g>
 <g class="fadeup" style="animation-delay:0.82s">
   <rect x="218" y="148" width="55" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="231" y="167" font-size="11" fill="#5B6472">Linux</text>
+  <text class="sans" x="231" y="167" font-size="11" fill="#8B95A5">Linux</text>
 </g>
 <g class="fadeup" style="animation-delay:0.88s">
   <rect x="281" y="148" width="52" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="294" y="167" font-size="11" fill="#5B6472">Bash</text>
+  <text class="sans" x="294" y="167" font-size="11" fill="#8B95A5">Bash</text>
 </g>
 <g class="fadeup" style="animation-delay:0.94s">
   <rect x="341" y="148" width="52" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="354" y="167" font-size="11" fill="#5B6472">Git</text>
+  <text class="sans" x="354" y="167" font-size="11" fill="#8B95A5">Git</text>
 </g>
 <g class="fadeup" style="animation-delay:1.00s">
   <rect x="48" y="184" width="62" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="61" y="203" font-size="11" fill="#5B6472">MySQL</text>
+  <text class="sans" x="61" y="203" font-size="11" fill="#8B95A5">MySQL</text>
 </g>
 <g class="fadeup" style="animation-delay:1.06s">
   <rect x="118" y="184" width="63" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="131" y="203" font-size="11" fill="#5B6472">SQLite</text>
+  <text class="sans" x="131" y="203" font-size="11" fill="#8B95A5">SQLite</text>
 </g>
 <g class="fadeup" style="animation-delay:1.12s">
   <rect x="189" y="184" width="55" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="202" y="203" font-size="11" fill="#5B6472">Nginx</text>
+  <text class="sans" x="202" y="203" font-size="11" fill="#8B95A5">Nginx</text>
 </g>
 <g class="fadeup" style="animation-delay:1.18s">
   <rect x="252" y="184" width="73" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="265" y="203" font-size="11" fill="#5B6472">Electron</text>
+  <text class="sans" x="265" y="203" font-size="11" fill="#8B95A5">Electron</text>
 </g>
 <g class="fadeup" style="animation-delay:1.24s">
   <rect x="333" y="184" width="52" height="28" rx="14" fill="#5B6472" fill-opacity="0.08" stroke="#5B6472" stroke-opacity=".45"/>
-  <text class="sans" x="346" y="203" font-size="11" fill="#5B6472">Lua</text>
+  <text class="sans" x="346" y="203" font-size="11" fill="#8B95A5">Lua</text>
 </g>
 
 <g class="fadeup" style="animation-delay:0.14s">

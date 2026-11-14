@@ -78,6 +78,9 @@ class ProfileGeneratorTests(unittest.TestCase):
             self.assertIn("★ 5", hero_svg)
             self.assertIn("3 FOLLOWERS", hero_svg)
             self.assertIn("Lua", contact_svg)
+            readme = (root / "README.md").read_text(encoding="utf-8")
+            self.assertIn("https://github.com/VintlGvard/LugoTUI", readme)
+            self.assertIn("https://t.me/VintlGvard", readme)
 
     def test_update_fails_loudly_on_validation_error(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -196,6 +199,67 @@ class ProfileGeneratorTests(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 gen.validate_svg("bad.svg", bad)
+
+    def test_hero_pill_pluralization_and_dynamic_spacing(self) -> None:
+        data_singular = {
+            "user": {"public_repos": 1, "followers": 1},
+            "stars": 1,
+        }
+        _, _, _, body_single, _ = gen.hero_parts(data_singular, gen.THEMES["dark"])
+        self.assertIn("1 REPO<", body_single)
+        self.assertIn("1 FOLLOWER<", body_single)
+        self.assertNotIn("1 REPOS", body_single)
+        self.assertNotIn("1 FOLLOWERS", body_single)
+
+        data_large = {
+            "user": {"public_repos": 1200, "followers": 9500},
+            "stars": 48000,
+        }
+        _, _, _, body_large, _ = gen.hero_parts(data_large, gen.THEMES["dark"])
+        self.assertIn("1200 REPOS", body_large)
+        self.assertIn("★ 48000", body_large)
+        self.assertIn("9500 FOLLOWERS", body_large)
+
+    def test_skills_core_alignment_and_chip_contrast(self) -> None:
+        self.assertEqual(gen.SKILLS_CORE, ("TypeScript", "Go"))
+        _, _, _, body, _ = gen.contact_parts({}, gen.THEMES["dark"])
+        self.assertIn('fill="#8B95A5">Python</text>', body)
+        self.assertIn('fill="#00E5CC">TypeScript</text>', body)
+        self.assertIn('fill="#00E5CC">Go</text>', body)
+
+    def test_stack_parts_renders_other_remainder(self) -> None:
+        data = {
+            "languages": [
+                ("Go", 42.7),
+                ("TypeScript", 28.6),
+                ("JavaScript", 10.7),
+                ("Lua", 7.5),
+                ("CSS", 4.3),
+                ("HTML", 3.1),
+            ]
+        }
+        _, _, _, body, _ = gen.stack_parts(data, gen.THEMES["dark"])
+        self.assertIn("Other", body)
+        self.assertIn("6.2%", body)
+
+    def test_readme_update_inserts_clickable_shipping_links(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            readme = Path(tmp) / "README.md"
+            readme.write_text("<!-- AUTO:START -->\nold\n<!-- AUTO:END -->\n", encoding="utf-8")
+            content = gen.render_readme(
+                {
+                    "shipping": [
+                        {"name": "portfolio-v3"},
+                        {"name": "LugoTUI"},
+                    ]
+                }
+            )
+            gen.update_readme(readme, content)
+            text = readme.read_text(encoding="utf-8")
+            self.assertIn("./assets/profile.svg", text)
+            self.assertIn("https://github.com/VintlGvard/portfolio-v3", text)
+            self.assertIn("https://github.com/VintlGvard/LugoTUI", text)
+            self.assertNotIn("old", text)
 
 
 if __name__ == "__main__":

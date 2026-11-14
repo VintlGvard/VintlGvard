@@ -43,6 +43,7 @@ def main() -> int:
         out = root / "assets"
         for name, svg in svgs.items():
             gen.write_text(out / name, svg)
+        gen.update_readme(root / "README.md", gen.render_readme(data))
         gen.save_cache(cache_path, cache)
         api = data.get("api") or {}
         logger.info(

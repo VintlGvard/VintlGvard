@@ -58,12 +58,12 @@
 <g class="fadeup" style="animation-delay:.28s">
   <rect x="48" y="190" width="408" height="32" rx="16" fill="#FFFFFF" fill-opacity=".06" stroke="#FFFFFF" stroke-opacity=".12"/>
   <text class="mono" x="64" y="210" font-size="10" fill="#00E5CC">15 REPOS</text>
-  <line x1="136" y1="198" x2="136" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
-  <text class="mono text" x="152" y="210" font-size="10">★ 10</text>
-  <line x1="204" y1="198" x2="204" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
-  <text class="mono text" x="220" y="210" font-size="10">1 FOLLOWERS</text>
-  <line x1="312" y1="198" x2="312" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
-  <text class="mono muted" x="328" y="210" font-size="9.5">TypeScript + Go</text>
+  <line x1="126" y1="198" x2="126" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
+  <text class="mono" x="142" y="210" font-size="10" fill="#E8EEF4">★ 10</text>
+  <line x1="194" y1="198" x2="194" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
+  <text class="mono" x="210" y="210" font-size="10" fill="#E8EEF4">1 FOLLOWER</text>
+  <line x1="288" y1="198" x2="288" y2="214" stroke="#FFFFFF" stroke-opacity=".14"/>
+  <text class="mono" x="304" y="210" font-size="9.5" fill="#8B95A5">TypeScript + Go</text>
 </g>
 <g class="fadeup" style="animation-delay:.2s">
   <circle cx="808" cy="110" r="30" fill="#0B1017" stroke="#FFFFFF" stroke-opacity=".1"/>
