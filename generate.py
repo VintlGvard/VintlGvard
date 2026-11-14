@@ -3,15 +3,20 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
-import sys
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
+from typing import Any
 
-from github import Auth, Github
+import requests
+from github import Auth, Github, GithubException
 from github.GithubRetry import GithubRetry
+from github.Repository import Repository
+
+logger = logging.getLogger(__name__)
 
 
 USER = "VintlGvard"
@@ -129,8 +134,8 @@ def repo_score(repo: dict, now: date) -> float:
 
 
 def choose_shipping(
-    repos: list, now: date | None = None
-) -> list:
+    repos: list[dict[str, Any]], now: date | None = None
+) -> list[dict[str, Any]]:
     day = now or date.today()
     candidates = [
         r for r in repos
@@ -140,8 +145,8 @@ def choose_shipping(
     return candidates[:3]
 
 
-def primary_counts(repos: list) -> dict:
-    counter = defaultdict(int)
+def primary_counts(repos: list[dict[str, Any]]) -> dict[str, int]:
+    counter: defaultdict[str, int] = defaultdict(int)
     for repo in repos:
         if repo.get("fork") or repo.get("archived") or repo.get("name") == USER:
             continue
@@ -150,7 +155,7 @@ def primary_counts(repos: list) -> dict:
     return counter
 
 
-def load_cache(path: Path) -> dict:
+def load_cache(path: Path) -> dict[str, Any]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -158,18 +163,31 @@ def load_cache(path: Path) -> dict:
     return data if isinstance(data, dict) else {}
 
 
-def save_cache(path: Path, cache: dict) -> None:
+def _write_atomic(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     try:
-        path.write_text(json.dumps(cache, separators=(",", ":")),
-                        encoding="utf-8")
+        tmp_path.write_text(text, encoding="utf-8", newline="\n")
+        os.replace(tmp_path, path)
+    finally:
+        if tmp_path.exists():
+            tmp_path.unlink(missing_ok=True)
+
+
+def save_cache(path: Path, cache: dict[str, Any]) -> None:
+    try:
+        _write_atomic(path, json.dumps(cache, separators=(",", ":")))
     except OSError as exc:
-        print(f"[warn] language cache write failed: {exc}", file=sys.stderr)
+        logger.warning("[warn] language cache write failed: %s", exc)
 
 
 def aggregate_languages(
-    repos: list, gh: Github, cache: dict
+    repos: list[dict[str, Any]],
+    gh: Github,
+    cache: dict[str, Any],
+    repo_objects: dict[str, Repository] | None = None,
 ) -> tuple[list[tuple[str, float]], str, int, int]:
-    bytes_by_lang = defaultdict(int)
+    bytes_by_lang: defaultdict[str, int] = defaultdict(int)
     fetched = reused = failed = 0
     for repo in repos:
         if repo.get("fork") or repo.get("archived") or repo.get("name") == USER:
@@ -183,12 +201,15 @@ def aggregate_languages(
             payload, reused = hit["langs"], reused + 1
         else:
             try:
-                payload = gh.get_repo(f"{USER}/{name}").get_languages()
+                repo_obj = repo_objects.get(name) if repo_objects is not None else None
+                if repo_obj is None:
+                    repo_obj = gh.get_repo(f"{USER}/{name}")
+                payload = repo_obj.get_languages()
                 cache[name] = {"pushed": stamp, "langs": payload}
                 fetched += 1
-            except Exception as exc:
+            except (GithubException, requests.RequestException, OSError) as exc:
                 failed += 1
-                print(f"[warn] languages/{name}: {exc}", file=sys.stderr)
+                logger.warning("[warn] languages/%s: %s", name, exc)
                 continue
         for key, value in payload.items():
             if isinstance(value, int) and value > 0:
@@ -199,13 +220,13 @@ def aggregate_languages(
     return top_langs(primary_counts(list(repos))), "primary", fetched, reused
 
 
-def top_langs(counter) -> list:
+def top_langs(counter: dict[str, int]) -> list[tuple[str, float]]:
     total = sum(counter.values()) or 1
     ranked = sorted(counter.items(), key=lambda kv: kv[1], reverse=True)[:6]
     return [(k, round(v * 100.0 / total, 1)) for k, v in ranked]
 
 
-def offline_payload(reason: str) -> dict:
+def offline_payload(reason: str) -> dict[str, Any]:
     return {
         "user": {"public_repos": None, "followers": None},
         "repos": [], "stars": None, "shipping": [], "languages": [],
@@ -214,7 +235,7 @@ def offline_payload(reason: str) -> dict:
     }
 
 
-def repo_dict(repo) -> dict:
+def repo_dict(repo: Repository) -> dict[str, Any]:
     return {
         "name": repo.name,
         "language": repo.language,
@@ -227,8 +248,11 @@ def repo_dict(repo) -> dict:
     }
 
 
-def get_data(token: str | None, fixture: str | None,
-             cache: dict | None = None) -> dict:
+def get_data(
+    token: str | None,
+    fixture: str | None,
+    cache: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     if fixture:
         payload = json.loads(Path(fixture).read_text(encoding="utf-8"))
         user, repos = payload["user"], payload["repos"]
@@ -249,8 +273,12 @@ def get_data(token: str | None, fixture: str | None,
     try:
         gh = connect(token)
         profile = gh.get_user(USER)
-        repos = [repo_dict(r) for r in profile.get_repos()]
-        langs, source, fetched, reused = aggregate_languages(repos, gh, cache)
+        raw_repos = list(profile.get_repos())
+        repo_objects = {r.name: r for r in raw_repos if r.name}
+        repos = [repo_dict(r) for r in raw_repos]
+        langs, source, fetched, reused = aggregate_languages(
+            repos, gh, cache, repo_objects=repo_objects
+        )
         return {
             "user": {"login": profile.login,
                      "public_repos": profile.public_repos,
@@ -262,10 +290,10 @@ def get_data(token: str | None, fixture: str | None,
             "reason": "live" if token else "live (anonymous)",
             "api": {"fetched": fetched, "cached": reused},
         }
-    except Exception as exc:
+    except (GithubException, requests.RequestException, OSError, ValueError) as exc:
         if os.environ.get("PROFILE_STRICT") == "1":
             raise
-        print(f"[warn] GitHub unavailable: {exc}", file=sys.stderr)
+        logger.warning("[warn] GitHub unavailable: %s", exc)
         return offline_payload(str(exc))
 
 
@@ -470,7 +498,7 @@ def skill_chips(p: dict[str, str], delay_base: float = .10) -> tuple[str, int]:
     x, row_y, parts = 48, 76, []
     for i, name in enumerate(SKILLS):
         core = name in SKILLS_CORE
-        w = max(52, int(round(char_units(name) * 7.1 + 28)))
+        w = max(52, round(char_units(name) * 7.1 + 28))
         if x + w > CHIP_LIMIT:
             x, row_y = 48, row_y + 36
         color = p["accent"] if core else p["dim"]
@@ -518,8 +546,7 @@ def _progress(data: dict) -> int:
     newest = ""
     for repo in data.get("shipping") or []:
         pushed = str(repo.get("pushed_at") or "")
-        if pushed > newest:
-            newest = pushed
+        newest = max(newest, pushed)
     try:
         age = (date.today()
                - date.fromisoformat(newest[:10])).days
@@ -697,20 +724,18 @@ def validate_text_constraints(data: dict) -> None:
 
 
 def write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8", newline="\n")
+    _write_atomic(path, text)
 
 
-
-def connect(token):
+def connect(token: str | None) -> Github:
     auth = Auth.Token(token) if token else None
     try:
-        return Github(auth=auth, retry=GithubRetry(max_rate_limit_wait=0))
+        return Github(auth=auth, retry=GithubRetry(max_rate_limit_wait=0), timeout=15)
     except TypeError:
-        return Github(auth=auth) if token else Github()
+        return Github(auth=auth, timeout=15) if token else Github(timeout=15)
 
 
-def fetch_identity(token):
+def fetch_identity(token: str | None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     gh = connect(token)
     profile = gh.get_user(USER)
     user = {"login": profile.login, "public_repos": profile.public_repos,
@@ -718,32 +743,43 @@ def fetch_identity(token):
     return user, [repo_dict(r) for r in profile.get_repos()]
 
 
+def build_card_svgs(
+    all_parts: list[tuple[str, str, int, str, str]],
+    p: dict[str, str],
+    slugs: tuple[str, ...] | None = None,
+) -> dict[str, str]:
+    target = set(slugs) if slugs is not None else None
+    svgs: dict[str, str] = {}
+    for slug, label, h, body, defs in all_parts:
+        if target is not None and slug not in target:
+            continue
+        svgs[f"{slug}.svg"] = shell(h, TITLES[slug], label, body, p, defs, slug)
+    return svgs
+
+
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     root = resolve_root(None)
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     try:
         user, repos = fetch_identity(token)
-    except Exception as exc:
-        raise SystemExit(f"generate: GitHub unavailable: {exc}")
+    except (GithubException, requests.RequestException, OSError) as exc:
+        raise SystemExit(f"generate: GitHub unavailable: {exc}") from exc
     stars = sum(int(r.get("stargazers_count") or 0) for r in repos)
     data = {"user": user, "repos": repos, "stars": stars, "shipping": [],
             "languages": [], "languages_source": "none", "offline": False,
             "reason": "static"}
     p = THEMES["dark"]
-    svgs = {}
-    for fn in (hero_parts, contact_parts):
-        slug, label, h, body, defs = fn(data, p)
-        svgs[f"{slug}.svg"] = shell(h, TITLES[slug], label, body, p, defs, slug)
+    parts = [hero_parts(data, p), contact_parts(data, p)]
+    svgs = build_card_svgs(parts, p)
     validate_text_constraints(data)
     for name, svg in svgs.items():
         validate_svg(name, svg)
     out = root / "assets"
-    out.mkdir(parents=True, exist_ok=True)
     for name, svg in svgs.items():
         write_text(out / name, svg)
     total_kib = sum(len(s.encode()) for s in svgs.values()) / 1024
-    print(f"[ok] static hero.svg + contact.svg ({total_kib:.1f} KiB) "
-          f"stars={stars}")
+    logger.info("[ok] static hero.svg + contact.svg (%.1f KiB) stars=%d", total_kib, stars)
 
 
 if __name__ == "__main__":
