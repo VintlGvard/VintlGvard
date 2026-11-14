@@ -41,17 +41,17 @@
   <text class="sans" x="48" y="87" font-size="11" fill="#E8EEF4">Go</text>
   <rect class="breathe" style="animation-delay:0.00s" x="200" y="78" width="512" height="10" rx="5" fill="#FFFFFF" fill-opacity=".1"/>
   <rect x="5" y="78" width="5" height="10" rx="5" fill="url(#accentGrad)" transform="translate(195 0)">
-    <animate attributeName="width" from="5" to="217" dur="0.8s" begin="0.30s" fill="freeze"/>
+    <animate attributeName="width" from="5" to="219" dur="0.8s" begin="0.30s" fill="freeze"/>
   </rect>
-  <text class="mono muted" x="852" y="87" font-size="9.5" text-anchor="end">42.4%</text>
+  <text class="mono muted" x="852" y="87" font-size="9.5" text-anchor="end">42.7%</text>
 </g>
 <g class="fadeup" style="animation-delay:0.27s">
   <text class="sans" x="48" y="117" font-size="11" fill="#E8EEF4">TypeScript</text>
   <rect class="breathe" style="animation-delay:0.30s" x="200" y="108" width="512" height="10" rx="5" fill="#FFFFFF" fill-opacity=".1"/>
   <rect x="5" y="108" width="5" height="10" rx="5" fill="url(#accentGrad)" transform="translate(195 0)">
-    <animate attributeName="width" from="5" to="147" dur="0.8s" begin="0.37s" fill="freeze"/>
+    <animate attributeName="width" from="5" to="146" dur="0.8s" begin="0.37s" fill="freeze"/>
   </rect>
-  <text class="mono muted" x="852" y="117" font-size="9.5" text-anchor="end">28.7%</text>
+  <text class="mono muted" x="852" y="117" font-size="9.5" text-anchor="end">28.6%</text>
 </g>
 <g class="fadeup" style="animation-delay:0.34s">
   <text class="sans" x="48" y="147" font-size="11" fill="#8B95A5">JavaScript</text>
@@ -59,15 +59,15 @@
   <rect x="5" y="138" width="5" height="10" rx="5" fill="#5B6472" transform="translate(195 0)">
     <animate attributeName="width" from="5" to="55" dur="0.8s" begin="0.44s" fill="freeze"/>
   </rect>
-  <text class="mono muted" x="852" y="147" font-size="9.5" text-anchor="end">10.8%</text>
+  <text class="mono muted" x="852" y="147" font-size="9.5" text-anchor="end">10.7%</text>
 </g>
 <g class="fadeup" style="animation-delay:0.41s">
   <text class="sans" x="48" y="177" font-size="11" fill="#8B95A5">Lua</text>
   <rect class="breathe" style="animation-delay:0.90s" x="200" y="168" width="512" height="10" rx="5" fill="#FFFFFF" fill-opacity=".1"/>
   <rect x="5" y="168" width="5" height="10" rx="5" fill="#5B6472" transform="translate(195 0)">
-    <animate attributeName="width" from="5" to="39" dur="0.8s" begin="0.51s" fill="freeze"/>
+    <animate attributeName="width" from="5" to="38" dur="0.8s" begin="0.51s" fill="freeze"/>
   </rect>
-  <text class="mono muted" x="852" y="177" font-size="9.5" text-anchor="end">7.6%</text>
+  <text class="mono muted" x="852" y="177" font-size="9.5" text-anchor="end">7.5%</text>
 </g>
 <g class="fadeup" style="animation-delay:0.48s">
   <text class="sans" x="48" y="207" font-size="11" fill="#8B95A5">CSS</text>
